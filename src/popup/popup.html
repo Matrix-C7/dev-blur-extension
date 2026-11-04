@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Image Blur</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Image Blur</h1>
+    <label class="switch" title="Enable / disable (Alt+Shift+B)">
+      <input type="checkbox" id="enabled">
+      <span class="slider"></span>
+    </label>
+  </header>
+
+  <section class="row">
+    <label for="blurAmount">Blur strength <output id="blurValue"></output></label>
+    <input type="range" id="blurAmount" min="2" max="40" step="1">
+  </section>
+
+  <section class="row">
+    <label for="minSize">Ignore images smaller than <output id="minSizeValue"></output></label>
+    <input type="range" id="minSize" min="0" max="200" step="4">
+    <small>Keeps icons and logos sharp. SVGs are always ignored.</small>
+  </section>
+
+  <section class="row check">
+    <input type="checkbox" id="revealOnHover">
+    <label for="revealOnHover">Reveal image on hover</label>
+  </section>
+
+  <section class="row check" id="siteRow">
+    <input type="checkbox" id="siteEnabled">
+    <label for="siteEnabled">Blur on <strong id="siteName">this site</strong></label>
+  </section>
+
+  <footer>Shortcut: Alt+Shift+B</footer>
+
+  <script src="../shared/settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
