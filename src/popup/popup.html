@@ -6,36 +6,86 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header>
-    <h1>Image Blur</h1>
-    <label class="switch" title="Enable / disable (Alt+Shift+B)">
-      <input type="checkbox" id="enabled">
-      <span class="slider"></span>
+  <header class="header">
+    <div class="brand">
+      <img class="brand-mark" src="../../icons/icon48.png" alt="">
+      <div>
+        <h1>Image Blur</h1>
+        <p class="status" id="status"><span class="dot"></span><span id="statusText">Active</span></p>
+      </div>
+    </div>
+    <label class="switch switch-lg" title="Turn blur on/off everywhere (Alt+L)">
+      <input type="checkbox" id="enabled" aria-label="Enable Image Blur">
+      <span class="track"><span class="thumb"></span></span>
     </label>
   </header>
 
-  <section class="row">
-    <label for="blurAmount">Blur strength <output id="blurValue"></output></label>
-    <input type="range" id="blurAmount" min="2" max="40" step="1">
-  </section>
+  <main class="content" id="content">
+    <section class="card site-card" id="siteCard">
+      <div class="site-info">
+        <img class="favicon" id="favicon" alt="">
+        <div class="site-text">
+          <span class="site-name" id="siteName">This site</span>
+          <span class="site-meta" id="siteMeta">Scanning…</span>
+        </div>
+      </div>
+      <label class="switch" title="Turn blur on/off for this site (Alt+K)">
+        <input type="checkbox" id="siteEnabled" aria-label="Blur on this site">
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </section>
 
-  <section class="row">
-    <label for="minSize">Ignore images smaller than <output id="minSizeValue"></output></label>
-    <input type="range" id="minSize" min="0" max="200" step="4">
-    <small>Keeps icons and logos sharp. SVGs are always ignored.</small>
-  </section>
+    <section class="card">
+      <div class="card-head">
+        <h2>Blur strength</h2>
+        <span class="value" id="blurValue">12px</span>
+      </div>
+      <div class="strength">
+        <div class="preview" aria-hidden="true"><div class="preview-img" id="previewImg"></div></div>
+        <div class="strength-controls">
+          <div class="segmented" role="radiogroup" aria-label="Blur preset">
+            <button type="button" data-preset="6">Light</button>
+            <button type="button" data-preset="12">Medium</button>
+            <button type="button" data-preset="24">Strong</button>
+          </div>
+          <input type="range" id="blurAmount" min="2" max="40" step="1" aria-label="Blur strength">
+        </div>
+      </div>
+    </section>
 
-  <section class="row check">
-    <input type="checkbox" id="revealOnHover">
-    <label for="revealOnHover">Reveal image on hover</label>
-  </section>
+    <section class="card">
+      <h2>Behavior</h2>
+      <div class="option">
+        <div class="option-text">
+          <span class="option-title">Reveal on hover</span>
+          <span class="option-desc">Show the image while the pointer is over it</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="revealOnHover" aria-label="Reveal on hover">
+          <span class="track"><span class="thumb"></span></span>
+        </label>
+      </div>
+      <div class="option option-stack">
+        <div class="option-row">
+          <div class="option-text">
+            <span class="option-title">Skip icons &amp; logos</span>
+            <span class="option-desc">Ignore images smaller than this. SVGs are always skipped.</span>
+          </div>
+          <span class="value" id="minSizeValue">32px</span>
+        </div>
+        <input type="range" id="minSize" min="0" max="200" step="4" aria-label="Minimum image size">
+      </div>
+    </section>
+  </main>
 
-  <section class="row check" id="siteRow">
-    <input type="checkbox" id="siteEnabled">
-    <label for="siteEnabled">Blur on <strong id="siteName">this site</strong></label>
-  </section>
-
-  <footer>Shortcut: Alt+Shift+B</footer>
+  <footer class="footer">
+    <div class="shortcuts">
+      <span><span class="keys" data-command="toggle-blur"><kbd>Alt</kbd><kbd>L</kbd></span> Toggle all</span>
+      <span><span class="keys" data-command="toggle-site"><kbd>Alt</kbd><kbd>K</kbd></span> Toggle site</span>
+    </div>
+    <button type="button" class="link" id="shortcutsLink">Customize</button>
+    <p class="shortcut-note" id="shortcutNote" hidden></p>
+  </footer>
 
   <script src="../shared/settings.js"></script>
   <script src="popup.js"></script>

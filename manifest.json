@@ -3,7 +3,7 @@
   "name": "Image Blur",
   "version": "1.0.0",
   "description": "Blurs images, background images and videos only — never SVGs, icons or whole pages. Works inside iframes such as the Shopify theme editor preview.",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background/service-worker.js"
@@ -34,8 +34,12 @@
   ],
   "commands": {
     "toggle-blur": {
-      "suggested_key": { "default": "Alt+Shift+B" },
-      "description": "Toggle image blur on/off"
+      "suggested_key": { "default": "Alt+L" },
+      "description": "Turn blur on/off everywhere"
+    },
+    "toggle-site": {
+      "suggested_key": { "default": "Alt+K" },
+      "description": "Turn blur on/off for the current site"
     }
   }
 }

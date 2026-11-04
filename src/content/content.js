@@ -2,8 +2,12 @@
 // Only <img>, <video> and elements with a raster CSS background-image are blurred.
 // SVGs, icon-sized images, iframes and the page itself are never touched.
 (() => {
-  if (window.__imageBlurLoaded) return;
-  window.__imageBlurLoaded = true;
+  // A copy left over from before an extension reload has a dead runtime — replace it.
+  const previous = window.__imageBlur;
+  if (previous?.isAlive()) return;
+  previous?.dispose();
+  const runtime = chrome.runtime;
+  window.__imageBlur = { isAlive: () => !!runtime?.id, dispose };
 
   const ATTR_MEDIA = 'data-ib-blur';   // <img> / <video>
   const ATTR_BG = 'data-ib-bg';        // element with background-image
@@ -64,15 +68,37 @@
 
   // ---------- roots / observing ----------
 
+  const OBSERVE_OPTS = { childList: true, subtree: true, attributes: true, attributeFilter: WATCHED_ATTRS };
+
   function addRoot(root) {
     if (roots.has(root)) return;
     roots.add(root);
     injectStyle(root);
-    mutationObserver.observe(root, {
-      childList: true, subtree: true, attributes: true, attributeFilter: WATCHED_ATTRS
-    });
-    const top = root === document ? document.documentElement : root;
-    if (top) queue(top);
+    mutationObserver.observe(root, OBSERVE_OPTS);
+    queueRoot(root);
+  }
+
+  function queueRoot(root) {
+    queue(root === document ? document.documentElement : root);
+  }
+
+  function rescanAll() {
+    roots.forEach(queueRoot);
+  }
+
+  // The Shopify theme editor re-renders the preview document in place
+  // (document.open/write, or swapping <html>). That throws away our <style>
+  // and erases event listeners, so check and repair regularly.
+  function heal() {
+    if (!active) return;
+    bindListeners();
+    const node = styleNodes.get(document);
+    if (document.documentElement && node?.parentNode !== document.documentElement) {
+      injectStyle(document);
+      mutationObserver.observe(document, OBSERVE_OPTS);
+      rescanAll();
+    }
+    styleNodes.forEach((n, root) => { if (root !== document && n.parentNode !== root) injectStyle(root); });
   }
 
   function shadowRootOf(el) {
@@ -90,8 +116,6 @@
     for (const r of records) {
       if (r.type === 'childList') {
         r.addedNodes.forEach((n) => { if (n.nodeType === 1) queue(n); });
-        // Some frameworks rebuild <head>/<html> on hydration — put our style back.
-        r.removedNodes.forEach((n) => { if (n.id === 'ib-blur-style' && active) injectStyle(r.target.getRootNode()); });
       } else {
         queue(r.target);
       }
@@ -100,6 +124,7 @@
 
   function flush() {
     flushTimer = null;
+    heal();
     const nodes = [...pending];
     pending.clear();
     for (const node of nodes) {
@@ -178,9 +203,36 @@
     revealed.clear();
   }
 
-  // Lazy-loaded images and videos often have no size until they load.
-  document.addEventListener('load', (e) => queue(e.target), true);
-  document.addEventListener('loadedmetadata', (e) => queue(e.target), true);
+  // ---------- events ----------
+
+  // Lazy-loaded images and videos often have no size until they load;
+  // a late stylesheet can add background images anywhere.
+  function onLoad(e) {
+    const tag = e.target?.localName;
+    if (tag === 'link' || tag === 'style') rescanAll(); else queue(e.target);
+  }
+
+  function onPointerMove(e) {
+    lastPoint = { x: e.clientX, y: e.clientY };
+    if (!moveFrame) moveFrame = requestAnimationFrame(updateReveal);
+  }
+
+  function clearReveal() {
+    lastPoint = null;
+    updateReveal();
+  }
+
+  // Safe to call repeatedly: addEventListener ignores duplicate (type, fn, capture).
+  function bindListeners() {
+    document.addEventListener('load', onLoad, true);
+    document.addEventListener('loadedmetadata', onLoad, true);
+    document.addEventListener('DOMContentLoaded', rescanAll);
+    window.addEventListener('load', rescanAll);
+    document.addEventListener('pointermove', onPointerMove, { passive: true, capture: true });
+    document.addEventListener('pointerleave', clearReveal, true);
+    document.documentElement?.addEventListener('pointerleave', clearReveal);
+    window.addEventListener('blur', clearReveal);
+  }
 
   // ---------- hover reveal ----------
   // Uses hit-testing instead of :hover so images under overlay links
@@ -208,16 +260,6 @@
     revealed = next;
   }
 
-  document.addEventListener('pointermove', (e) => {
-    lastPoint = { x: e.clientX, y: e.clientY };
-    if (!moveFrame) moveFrame = requestAnimationFrame(updateReveal);
-  }, { passive: true, capture: true });
-
-  const clearReveal = () => { lastPoint = null; updateReveal(); };
-  document.addEventListener('pointerleave', clearReveal, true);
-  document.documentElement?.addEventListener('pointerleave', clearReveal);
-  window.addEventListener('blur', clearReveal);
-
   // ---------- enable / disable ----------
 
   function topHostname() {
@@ -237,6 +279,8 @@
 
   function start() {
     active = true;
+    console.info('[Image Blur] active in', location.href);
+    bindListeners();
     if (document.documentElement) {
       addRoot(document);
     } else {
@@ -244,7 +288,7 @@
     }
     roots.forEach((root) => {
       injectStyle(root);
-      queue(root === document ? document.documentElement : root);
+      queueRoot(root);
     });
   }
 
@@ -266,11 +310,44 @@
     if (!active) return start();
 
     refreshStyles();
-    if (prev.minSize !== next.minSize) {
-      roots.forEach((root) => queue(root === document ? document.documentElement : root));
-    }
+    if (prev.minSize !== next.minSize) rescanAll();
     if (!next.revealOnHover) updateReveal();
   }
+
+  function dispose() {
+    active = false;
+    clearInterval(healTimer);
+    window.removeEventListener('keydown', onKeyDown, true);
+    mutationObserver.disconnect();
+    sizeObserver.disconnect();
+    styleNodes.forEach((node) => node.remove());
+  }
+
+  // ---------- shortcut fallback ----------
+  // Bound even while blur is off, so Alt+L can turn it back on.
+
+  const SHORTCUTS = { KeyL: 'toggle-blur', KeyK: 'toggle-site' };
+
+  function onKeyDown(e) {
+    if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+    const command = SHORTCUTS[e.code];
+    if (!command || !runtime?.id) return;
+    e.preventDefault();
+    e.stopPropagation();
+    runtime.sendMessage({ type: 'shortcut', command }).catch(() => { /* worker restarting */ });
+  }
+
+  function bindKeys() {
+    window.addEventListener('keydown', onKeyDown, true);
+  }
+
+  bindKeys();
+
+  const healTimer = setInterval(() => {
+    if (!runtime?.id) return dispose();
+    bindKeys();
+    heal();
+  }, 1000);
 
   IB.load().then(apply);
   IB.onChange(apply);

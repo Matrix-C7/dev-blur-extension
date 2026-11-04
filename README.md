@@ -32,13 +32,15 @@ Open the toolbar popup to change these settings:
 
 | Setting | Default | Notes |
 | --- | --- | --- |
-| On/off | On | Also **Alt+Shift+B** |
+| On/off (everywhere) | On | **Alt+L**: press once = off, again = on |
 | Blur strength | 12px | 2–40px |
 | Ignore images smaller than | 32px | Keeps icons and logos sharp |
 | Reveal on hover | On | Works even when an overlay link covers the image |
-| Blur on this site | On | Per-site toggle |
+| Blur on this site | On | **Alt+K**: same toggle for the current site only |
 
 Changes apply right away. You don't need to reload the page.
+
+The toolbar icon shows the status of the current tab: a blue icon while blur is active and a grey icon when it is paused (everywhere, or just on this site).
 
 ## Structure
 

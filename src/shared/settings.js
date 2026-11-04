@@ -1,5 +1,5 @@
 // Shared settings helpers — loaded by the content script, popup and service worker.
-globalThis.IB = globalThis.IB || {
+globalThis.IB = {
   STORAGE_KEY: 'settings',
 
   DEFAULTS: {
