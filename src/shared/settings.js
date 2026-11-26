@@ -5,7 +5,7 @@ globalThis.IB = {
   DEFAULTS: {
     enabled: true,
     blurAmount: 12,       // px
-    revealOnHover: true,
+    revealOnHover: false,
     minSize: 32,          // px — images smaller than this (either side) are treated as icons
     disabledSites: []     // hostnames
   },

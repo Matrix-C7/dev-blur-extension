@@ -35,7 +35,7 @@ Open the toolbar popup to change these settings:
 | On/off (everywhere) | On | **Alt+L**: press once = off, again = on |
 | Blur strength | 12px | 2–40px |
 | Ignore images smaller than | 32px | Keeps icons and logos sharp |
-| Reveal on hover | On | Works even when an overlay link covers the image |
+| Reveal on hover | Off | Works even when an overlay link covers the image |
 | Blur on this site | On | **Alt+K**: same toggle for the current site only |
 
 Changes apply right away. You don't need to reload the page.
