@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Image Blur",
-  "version": "1.0.0",
-  "description": "Blurs images, background images and videos only — never SVGs, icons or whole pages. Works inside iframes such as the Shopify theme editor preview.",
+  "version": "1.0.1",
+  "description": "Blurs images, background images and videos only — never SVGs, icons or pages. Works in iframes like the Shopify theme editor.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": {
